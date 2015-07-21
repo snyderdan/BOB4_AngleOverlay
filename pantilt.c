@@ -16,6 +16,16 @@ uint16_t tiltXShift = 205;
 int16_t  tiltYShift = 180;
 uint16_t tiltMode = MODE_RELATIVE;
 
+# define SAMPLE_COUNT 64
+
+uint16_t pan_readings[SAMPLE_COUNT];
+uint16_t pan_total = 0;
+uint16_t pan_index = 0;
+
+uint16_t tilt_readings[SAMPLE_COUNT];
+uint16_t tilt_total = 0;
+uint16_t tilt_index = 0;
+
 void initPanTilt() {
 	
 	return;
@@ -145,12 +155,12 @@ void toggleTiltMode() {
  * 
  */
 int getPan() {
-	return (int) (panSlope * (((signed) panRange + ((signed) analogRead(PAN_PORT) - (signed) panXShift)) % (signed) panRange)) - panYShift;
+	return (int) (panSlope * (((signed) panRange + ((signed) sampledRawPan() - (signed) panXShift)) % (signed) panRange)) - panYShift;
 	
 }
 
 int getTilt() {
-	return (int) (tiltSlope * (((signed) tiltRange + ((signed) analogRead(TILT_PORT) - (signed) tiltXShift)) % (signed) tiltRange)) - tiltYShift;
+	return (int) (tiltSlope * (((signed) tiltRange + ((signed) sampledRawTilt() - (signed) tiltXShift)) % (signed) tiltRange)) - tiltYShift;
 }
 
 void setPanShift(uint16_t value) {
@@ -199,7 +209,7 @@ void calibratePan() {
 	storePanTilt();
 }
 
-void calibrateTiltUpper() {
+void calibrateTiltLower() {
 	
 	uint16_t upper_limit = analogRead(TILT_PORT);
 	
@@ -210,6 +220,37 @@ void calibrateTiltUpper() {
 	storePanTilt();
 }
 
-void calibrateTiltLower() {
+void calibrateTiltUpper() {
 	tiltXShift = analogRead(TILT_PORT);
+}
+
+
+uint16_t sampledRawPan() {
+	
+	pan_total -= pan_readings[pan_index];
+	pan_readings[pan_index] = analogRead(PAN_PORT);
+	pan_total += pan_readings[pan_index];
+	pan_index = (pan_index + 1) & 0x3F;
+	
+	pan_total -= pan_readings[pan_index];
+	pan_readings[pan_index] = analogRead(PAN_PORT);
+	pan_total += pan_readings[pan_index];
+	pan_index = (pan_index + 1) & 0x3F;
+	
+	return pan_total / SAMPLE_COUNT;
+}
+
+uint16_t sampledRawTilt() {
+	
+	tilt_total -= tilt_readings[tilt_index];
+	tilt_readings[tilt_index] = analogRead(TILT_PORT);
+	tilt_total += tilt_readings[tilt_index];
+	tilt_index = (tilt_index + 1) & 0x3F;
+	
+	tilt_total -= tilt_readings[tilt_index];
+	tilt_readings[tilt_index] = analogRead(TILT_PORT);
+	tilt_total += tilt_readings[tilt_index];
+	tilt_index = (tilt_index + 1) & 0x3F;
+	
+	return tilt_total / SAMPLE_COUNT;
 }

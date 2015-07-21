@@ -5,5 +5,7 @@
 # define AREF_1_1V   0x80	// 1.1V
 # define AREF_2_56V  0xC0	// 2.56V
 
+extern uint8_t sampleRate; 
+
 void setAnalogReference(uint8_t);
 uint16_t analogRead(uint8_t pin);

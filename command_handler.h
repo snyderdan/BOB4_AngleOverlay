@@ -3,6 +3,7 @@
 
 #include "usart.h"
 #include "pantilt.h"
+#include "analog.h"
 
 extern const char CMD_IDENTIFIER[];	// 'CSI' or control sequence inducer as-per BOB-4
 extern const char VALID_CMD[];

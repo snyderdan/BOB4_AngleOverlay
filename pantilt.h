@@ -21,6 +21,8 @@ void storePanTilt();
 
 int getPan();
 int getTilt();
+uint16_t sampledRawPan();
+uint16_t sampledRawTilt();
 
 void initMode();
 void setPanMode(uint16_t mode);

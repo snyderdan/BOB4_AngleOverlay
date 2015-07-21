@@ -73,19 +73,18 @@ int main(void)
 		sprintf(str,"\e[0;0H");
 		SendString1(str);
 		
-		sprintf(str, "PAN:  %-4d", getPan());
+		sprintf(str, "PAN:  %-4d    ", getPan());
 		SendString1(str);
 		
 		// go to TILT field and clear last number
 		sprintf(str, "\e[1;0H");
 		SendString1(str);
 		
-		sprintf(str, "TILT: %-4d", getTilt());
+		sprintf(str, "TILT: %-4d    ", getTilt());
 		SendString1(str);
 		
 		commandHandler();
 		
-		_delay_ms(100.0);
-		
+		_delay_ms(25.0);
 	}
 }
