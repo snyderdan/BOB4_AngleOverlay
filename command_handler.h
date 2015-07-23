@@ -18,6 +18,7 @@ extern const char VALID_CMD[];
 # define CMD_TOGMODE   'T'
 # define CMD_GETPARAMS 'P'
 # define CMD_GETRAW    'Q'
+# define CMD_GETSAMPLE 'S'
 
 # define OPERAND_PAN  'P'
 # define OPERAND_TILT 'T'

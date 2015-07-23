@@ -5,8 +5,8 @@
 const char CMD_IDENTIFIER[] = CSI_SEQ;	// 'CSI' or control sequence inducer as-per BOB-4
 
 const char VALID_CMD[] = {CMD_ZERO, CMD_CALIBRATE, CMD_RELMODE, 
-	CMD_ABSMODE, CMD_TOGMODE, CMD_GETPARAMS, CMD_GETRAW};
-const int VALID_CMD_COUNT = 7;
+	CMD_ABSMODE, CMD_TOGMODE, CMD_GETPARAMS, CMD_GETRAW, CMD_GETSAMPLE};
+const int VALID_CMD_COUNT = 8;
 
 char CMDIN[256];
 uint8_t filled = 0;
@@ -135,6 +135,12 @@ void commandHandler() {
 					);
 			SendString2(string);
 		} else if (curChar == CMD_GETRAW) {
+			processed += 1;
+			sprintf(string, "\n\rCURRENT RAW PAN: %4d  CURRENT RAW TILT: %d\n\r", 
+					analogRead(PAN_PORT), analogRead(TILT_PORT)
+					);
+			SendString2(string);
+		} else if (curChar == CMD_GETSAMPLE) {
 			processed += 1;
 			sprintf(string, "\n\rCURRENT RAW PAN: %4d  CURRENT RAW TILT: %d\n\r", 
 					sampledRawPan(), sampledRawTilt()

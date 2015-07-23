@@ -16,7 +16,8 @@ uint16_t tiltXShift = 205;
 int16_t  tiltYShift = 180;
 uint16_t tiltMode = MODE_RELATIVE;
 
-# define SAMPLE_COUNT 64
+# define SAMPLE_COUNT 32
+# define INDEX_MASK   (SAMPLE_COUNT - 1)
 
 uint16_t pan_readings[SAMPLE_COUNT];
 uint16_t pan_total = 0;
@@ -192,9 +193,8 @@ void calibratePan() {
 	uint16_t upper_limit = lower_limit;
 	uint16_t current;
 	
-	// while the difference is smaller than 744 
-	// this assumes the biggest variation from 0 or 3.3V will be +-0.45V
-	while ((upper_limit - lower_limit) < 744) {
+	// while the difference is smaller than 600
+	while ((upper_limit - lower_limit) < 600) {
 		current = analogRead(PAN_PORT);
 		
 		if (current > upper_limit) {
@@ -204,6 +204,7 @@ void calibratePan() {
 		}
 	}
 	
+	panXShift = lower_limit;
 	panRange = upper_limit - lower_limit;
 	panSlope = PAN_ANGLE_RANGE / (float) (panRange);
 	storePanTilt();
@@ -230,12 +231,12 @@ uint16_t sampledRawPan() {
 	pan_total -= pan_readings[pan_index];
 	pan_readings[pan_index] = analogRead(PAN_PORT);
 	pan_total += pan_readings[pan_index];
-	pan_index = (pan_index + 1) & 0x3F;
+	pan_index = (pan_index + 1) & INDEX_MASK;
 	
 	pan_total -= pan_readings[pan_index];
 	pan_readings[pan_index] = analogRead(PAN_PORT);
 	pan_total += pan_readings[pan_index];
-	pan_index = (pan_index + 1) & 0x3F;
+	pan_index = (pan_index + 1) & INDEX_MASK;
 	
 	return pan_total / SAMPLE_COUNT;
 }
@@ -245,12 +246,12 @@ uint16_t sampledRawTilt() {
 	tilt_total -= tilt_readings[tilt_index];
 	tilt_readings[tilt_index] = analogRead(TILT_PORT);
 	tilt_total += tilt_readings[tilt_index];
-	tilt_index = (tilt_index + 1) & 0x3F;
+	tilt_index = (tilt_index + 1) & INDEX_MASK;
 	
 	tilt_total -= tilt_readings[tilt_index];
 	tilt_readings[tilt_index] = analogRead(TILT_PORT);
 	tilt_total += tilt_readings[tilt_index];
-	tilt_index = (tilt_index + 1) & 0x3F;
+	tilt_index = (tilt_index + 1) & INDEX_MASK;
 	
 	return tilt_total / SAMPLE_COUNT;
 }
