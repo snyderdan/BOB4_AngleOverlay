@@ -5,11 +5,11 @@
 #include "pantilt.h"
 #include "analog.h"
 
-extern const char CMD_IDENTIFIER[];	// 'CSI' or control sequence inducer as-per BOB-4
 extern const char VALID_CMD[];
+extern const int VALID_CMD_COUNT;
 
-# define CSI_SEQ  "\e["
-# define CSI_LEN  2
+# define CSI_SEQ  '\xC3'
+# define CSE_SEQ  '\x5D'
 
 # define CMD_ZERO 	   'Z'
 # define CMD_CALIBRATE 'C'
@@ -17,13 +17,15 @@ extern const char VALID_CMD[];
 # define CMD_ABSMODE   'A'
 # define CMD_TOGMODE   'T'
 # define CMD_GETPARAMS 'P'
-# define CMD_GETRAW    'Q'
-# define CMD_GETSAMPLE 'S'
+# define CMD_GETRAW    'G'
+# define CMD_GETSAMPLE 'Q'
+# define CMD_ANALOG    'V'
+# define CMD_DIGITAL   'D'
+# define CMD_SETPT     'S'
 
 # define OPERAND_PAN  'P'
 # define OPERAND_TILT 'T'
 # define OPERAND_TILTU  'U'
 # define OPERAND_TILTL  'L'
-# define MAX_OPERAND_COUNT 3
 
 void commandHandler();
