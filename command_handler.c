@@ -77,7 +77,7 @@ void commandHandler() {
 	// isolate arguments
 	for (i=0; (i<available) && (i<=argc); i++) {
 		curChar = CMDIN[(uint8_t)(processed+i+2)];
-		if (curChar == CSE_SEQ) {	// termination? 
+		if (curChar == CST_SEQ) {	// termination? 
 			argc = i;
 			break;			// exit loop - only real way out
 		}
