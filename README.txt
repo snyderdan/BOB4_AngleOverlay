@@ -86,12 +86,13 @@ Example Commands:
 	<CSI>APT<CST>	set pan & tilt to absolute mode		"\xC3APT\x5D" or "\xC3ATP\x5D"
 	<CSI>P<CST>		view pan & tilt parameters			"\xC3P\x5D"
 	
-Examples of Invalid Commands:
+Examples of Invalidating Commands:
 
-	Command						C string command
-	<CSI>CPT<CST>				"\xC3CPT\x5D"
-	<CSI>APTP<CST>				"\xC3APTP\x5D"
-	<CSI>PT<CST>				"\xC3PT\x5D"
+	Invalidated Command			C string command	Problem
+	<CSI>CPT					"\xC3CPT..."		Too many arguments
+	<CSI>APTP					"\xC3APTP..."		Too many arguments
+	<CSI>S1F<CST>				"\xC3S1F\x5D"		Too few arguments
+	<CSI>F						"\xC3F..."			Invalid command byte
 
 
 Calibration:
