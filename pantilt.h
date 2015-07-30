@@ -34,6 +34,8 @@ int getPanAngle();				// get calculated pan angle
 int getTiltAngle();				// get calculated tilt angle
 uint16_t getSampledPan();		// get sampled pan value
 uint16_t getSampledTilt();		// get sampled tilt value
+void setPanParams(uint16_t, uint16_t);
+void setTiltParams(uint16_t, uint16_t);
 
 void initMode();
 void setSourceMode(uint16_t mode);
@@ -44,8 +46,8 @@ void toggleTiltMode();
 
 extern uint16_t panRaw;
 extern uint16_t tiltRaw;
-extern double panSlope;
-extern double tiltSlope;
+extern float panSlope;
+extern float tiltSlope;
 extern uint16_t panXShift;
 extern uint16_t panRange;
 extern int16_t  panYShift;
@@ -53,3 +55,5 @@ extern uint16_t tiltXShift;
 extern uint16_t tiltRange;
 extern int16_t  tiltYShift;
 extern uint16_t sourceMode;
+extern uint16_t panLLimit;
+extern uint16_t tiltLLimit;

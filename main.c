@@ -63,25 +63,41 @@ int main(void)
 	SendString2(str);
 	
 	// set font to smallest english ASCII
-	sprintf(str,"\e[4z");
+	sprintf(str,"\e[14m\e[66m\e[2J");
 	SendString1(str);
+	
+	_delay_ms(500.00);	// allow time for BOB4 to make adjustments
 	
 	while(1)
 	{
-		
+			// set font to smallest english ASCII
+		sprintf(str,"\e[14m\e[66m");
+		SendString1(str);
 		// go to PAN field and clear last number
 		sprintf(str,"\e[0;0H");
 		SendString1(str);
 		
-		sprintf(str, "PAN:  %-4d    ", getPanAngle());
-		SendString1(str);
-		
-		// go to TILT field and clear last number
-		sprintf(str, "\e[1;0H");
-		SendString1(str);
-		
-		sprintf(str, "TILT: %-4d    ", getTiltAngle());
-		SendString1(str);
+		if (debugMode) {
+			sprintf(str, " PAN:%4d RAW:%5d SAMP:%5d ", getPanAngle(), getRawPan(), getSampledPan());
+			SendString1(str);
+			
+			// go to TILT field and clear last number
+			sprintf(str, "\e[1;0H");
+			SendString1(str);
+			
+			sprintf(str, " TLT:%4d RAW:%5d SAMP:%5d ", getTiltAngle(), getRawTilt(), getSampledTilt());
+			SendString1(str);
+		} else {
+			sprintf(str, " PAN:%4d ", getPanAngle());
+			SendString1(str);
+			
+			// go to TILT field and clear last number
+			sprintf(str, "\e[1;0H");
+			SendString1(str);
+			
+			sprintf(str, " TLT:%4d ", getTiltAngle());
+			SendString1(str);
+		}
 		
 		commandHandler();
 		

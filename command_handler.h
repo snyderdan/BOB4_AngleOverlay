@@ -7,6 +7,7 @@
 
 extern const char VALID_CMD[];
 extern const int VALID_CMD_COUNT;
+extern int debugMode;
 
 # define CSI_SEQ  '\xC3'
 # define CST_SEQ  '\x5D'
@@ -22,6 +23,8 @@ extern const int VALID_CMD_COUNT;
 # define CMD_ANALOG		'V'
 # define CMD_DIGITAL	'D'
 # define CMD_SETPT		'S'
+# define CMD_SETPARAMS	'p'
+# define CMD_DEBUG		'd'
 
 # define OPERAND_PAN	'P'
 # define OPERAND_TILT	'T'
