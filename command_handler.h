@@ -13,7 +13,6 @@ extern int debugMode;
 # define CST_SEQ  '\x5D'
 
 # define CMD_ZERO		'Z'
-# define CMD_CALIBRATE	'C'
 # define CMD_RELMODE	'R'
 # define CMD_ABSMODE	'A'
 # define CMD_TOGMODE	'T'
@@ -28,7 +27,5 @@ extern int debugMode;
 
 # define OPERAND_PAN	'P'
 # define OPERAND_TILT	'T'
-# define OPERAND_TILTU	'U'
-# define OPERAND_TILTL	'L'
 
 void commandHandler();

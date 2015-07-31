@@ -2,15 +2,15 @@
 
 #include "command_handler.h"
 
-const char VALID_CMD[] = {CMD_ZERO, CMD_CALIBRATE, CMD_RELMODE, CMD_ABSMODE,
+const char VALID_CMD[] = {CMD_ZERO, CMD_RELMODE, CMD_ABSMODE,
 	 CMD_TOGMODE, CMD_GETPARAMS, CMD_GETRAW, CMD_GETSAMPLE, CMD_SETPT,
 	 CMD_ANALOG, CMD_DIGITAL, CMD_SETPARAMS, CMD_DEBUG};
 
-const uint8_t VALID_CMD_ARGC[] = {2,1,2,2,2,0,0,0,8,0,0,9,0};
+const uint8_t VALID_CMD_ARGC[] = {2,2,2,2,0,0,0,8,0,0,9,0};
 
 # define MAX_ARG_COUNT 9	// Number of args used in setparams command
 	
-const int VALID_CMD_COUNT = 13;
+const int VALID_CMD_COUNT = 12;
 
 int debugMode = 0;
 
@@ -106,16 +106,6 @@ void commandHandler() {
 				setPanShift(getSampledPan());
 			} else if (args[i] == OPERAND_TILT) {
 				setTiltShift(getSampledTilt());
-			}
-		}
-	} else if (curChar == CMD_CALIBRATE) {
-		for (i=0; i<argc; i++) {
-			if (args[i] == OPERAND_PAN) {
-				calibratePan();
-			} else if (args[i] == OPERAND_TILTU) {
-				calibrateTiltUpper();
-			} else if (args[i] == OPERAND_TILTL) {
-				calibrateTiltLower();
 			}
 		}
 	} else if (curChar == CMD_RELMODE) {

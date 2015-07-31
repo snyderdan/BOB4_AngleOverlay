@@ -1,7 +1,5 @@
 #include <stdint.h>
 
-# define PANTILT_EEPROM_ADDR 0x400
-
 # define PAN_PORT 0
 # define PAN_ANGLE_RANGE 360.0
 
@@ -11,16 +9,14 @@
 # define MODE_ABSOLUTE 0
 # define MODE_RELATIVE 1
 
-# define MODE_DIGITAL 1
-# define MODE_ANALOG  2
+# define MODE_DIGITAL 2
+# define MODE_ANALOG  3
 
 void initPanTilt();				// initialize pan and tilt - load settings from EEPROM
+void storePanTilt();			// store pan and tilt settings in EEPROM
+
 void setPanShift(uint16_t);		// set zero point essentially - x-shift
 void setTiltShift(uint16_t);
-void calibratePan();			// pan calibration mode
-void calibrateTiltUpper();		// calibrate upper limit of tilt
-void calibrateTiltLower();		// calibrate lower limit of tilt
-void storePanTilt();			// store pan and tilt settings in EEPROM
 
 void setDigitalPan(uint16_t);	// set digital pan
 void setDigitalTilt(uint16_t);	// set digital tilt
@@ -37,7 +33,6 @@ uint16_t getSampledTilt();		// get sampled tilt value
 void setPanParams(uint16_t, uint16_t);
 void setTiltParams(uint16_t, uint16_t);
 
-void initMode();
 void setSourceMode(uint16_t mode);
 void setPanMode(uint16_t mode);
 void setTiltMode(uint16_t mode);
