@@ -13,7 +13,6 @@
 # define MODE_ANALOG  3
 
 void initPanTilt();				// initialize pan and tilt - load settings from EEPROM
-void storePanTilt();			// store pan and tilt settings in EEPROM
 
 void setPanShift(uint16_t);		// set zero point essentially - x-shift
 void setTiltShift(uint16_t);

@@ -9,3 +9,4 @@ extern uint8_t sampleRate;
 
 void setAnalogReference(uint8_t);
 uint16_t analogRead(uint8_t pin);
+void initADC();

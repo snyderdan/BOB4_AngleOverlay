@@ -5,31 +5,9 @@
 #include "pantilt.h"
 #include "array.h"
 
-/**
- * EEPROM definitions so that the compiler can handle the addresses and allocation
- * 
- ***********************************************************************/
+uint16_t sourceMode = MODE_DIGITAL;
 
-uint8_t EEMEM firstRunEE = 0;
-uint16_t EEMEM sourceModeEE = MODE_DIGITAL;
-
-float EEMEM panSlopeEE = 0;
-uint16_t EEMEM panRangeEE = 1000;
-uint16_t EEMEM panLLimitEE = 500;
-uint16_t EEMEM panXShiftEE = 1000;
-uint16_t EEMEM panModeEE = MODE_RELATIVE;
-
-float EEMEM tiltSlopeEE = 0;
-uint16_t EEMEM tiltRangeEE = 1000;
-uint16_t EEMEM tiltLLimitEE = 500;
-uint16_t EEMEM tiltXShiftEE = 1000;
-uint16_t EEMEM tiltModeEE = MODE_RELATIVE;
-
-/***********************************************************************/
-
-uint16_t sourceMode = 0;
-
-float panSlope = 0;
+float panSlope = 0.205;
 uint16_t panRaw = 1000;
 uint16_t panRange = 1000;
 uint16_t panLLimit = 500;
@@ -39,7 +17,7 @@ uint16_t panMode = MODE_RELATIVE;
 uint16_t panTempUpper = 1000;
 uint16_t panTempLower = 1000;
 
-float tiltSlope = 0;
+float tiltSlope = 0.205;
 uint16_t tiltRaw = 1000;
 uint16_t tiltRange = 1000;
 uint16_t tiltLLimit = 500;
@@ -60,6 +38,26 @@ uint16_t tilt_readings[SAMPLE_COUNT];
 uint32_t tilt_total = 0;
 uint16_t tilt_index = 0;
 
+/**
+ * EEPROM definitions so that the compiler can handle the addresses and allocation
+ * 
+ ***********************************************************************/
+uint16_t EEMEM sourceModeEE = MODE_DIGITAL;
+
+float EEMEM panSlopeEE = 0.205;
+uint16_t EEMEM panRangeEE = 1000;
+uint16_t EEMEM panLLimitEE = 500;
+uint16_t EEMEM panXShiftEE = 1000;
+uint16_t EEMEM panModeEE = MODE_RELATIVE;
+
+float EEMEM tiltSlopeEE = 0.205;
+uint16_t EEMEM tiltRangeEE = 1000;
+uint16_t EEMEM tiltLLimitEE = 500;
+uint16_t EEMEM tiltXShiftEE = 1000;
+uint16_t EEMEM tiltModeEE = MODE_RELATIVE;
+
+/***********************************************************************/
+
 void initPanTilt() {
 	
 	int i;
@@ -68,42 +66,21 @@ void initPanTilt() {
 		pan_readings[i] = 0;
 		tilt_readings[i] = 0;
 	}
+	
+	getRawPan = getDigitalPan;
+	getRawTilt = getDigitalTilt;
 
-	// read byte from EEPROM
-	uint8_t notFirstRun = eeprom_read_byte(&firstRunEE);
-
-	// if it's not the first run, then read in the previous values
-	if (notFirstRun) {
-		setSourceMode(eeprom_read_word(&sourceModeEE));
-		panSlope = eeprom_read_float(&panSlopeEE);
-		panLLimit = eeprom_read_word(&panLLimitEE);
-		panXShift = eeprom_read_word(&panXShiftEE);
-		panRange = eeprom_read_word(&panRangeEE);
-		setPanMode(eeprom_read_word(&panModeEE));
-		tiltSlope = eeprom_read_float(&tiltSlopeEE);
-		tiltLLimit = eeprom_read_word(&tiltLLimitEE);
-		tiltXShift = eeprom_read_word(&tiltXShiftEE);
-		tiltRange = eeprom_read_word(&tiltRangeEE);
-		setTiltMode(eeprom_read_word(&tiltModeEE));
-	} else {
-		storePanTilt();
-	}
-}
-
-void storePanTilt() {
-
-	eeprom_update_byte(&firstRunEE, 1);
-	eeprom_update_word(&sourceModeEE, sourceMode);
-	eeprom_update_float(&panSlopeEE, panSlope);
-	eeprom_update_word(&panLLimitEE, panLLimit);
-	eeprom_update_word(&panXShiftEE, panXShift);
-	eeprom_update_word(&panRangeEE, panRange);
-	eeprom_update_word(&panModeEE, panMode);
-	eeprom_update_float(&tiltSlopeEE, tiltSlope);
-	eeprom_update_word(&tiltLLimitEE, tiltLLimit);
-	eeprom_update_word(&tiltXShiftEE, tiltXShift);
-	eeprom_update_word(&tiltRangeEE, tiltRange);
-	eeprom_update_word(&tiltModeEE, tiltMode);
+	setSourceMode(eeprom_read_word(&sourceModeEE));
+	panSlope = eeprom_read_float(&panSlopeEE);
+	panLLimit = eeprom_read_word(&panLLimitEE);
+	panXShift = eeprom_read_word(&panXShiftEE);
+	panRange = eeprom_read_word(&panRangeEE);
+	setPanMode(eeprom_read_word(&panModeEE));
+	tiltSlope = eeprom_read_float(&tiltSlopeEE);
+	tiltLLimit = eeprom_read_word(&tiltLLimitEE);
+	tiltXShift = eeprom_read_word(&tiltXShiftEE);
+	tiltRange = eeprom_read_word(&tiltRangeEE);
+	setTiltMode(eeprom_read_word(&tiltModeEE));
 }
 
 void setPanMode(uint16_t mode) {
@@ -123,7 +100,8 @@ void setPanMode(uint16_t mode) {
 		panMode = MODE_ABSOLUTE;
 	}
 
-	storePanTilt();
+	eeprom_write_word(&panXShiftEE, panXShift);
+	eeprom_write_word(&panModeEE, panMode);
 }
 
 void togglePanMode() {
@@ -146,7 +124,8 @@ void setTiltMode(uint16_t mode) {
 		tiltMode = MODE_ABSOLUTE;
 	}
 
-	storePanTilt();
+	eeprom_write_word(&tiltXShiftEE, tiltXShift);
+	eeprom_write_word(&tiltModeEE, tiltMode);
 }
 
 void toggleTiltMode() {
@@ -165,7 +144,7 @@ void setSourceMode(uint16_t mode) {
 		getRawTilt = getDigitalTilt;
 	}
 	
-	storePanTilt();
+	eeprom_write_word(&sourceModeEE, sourceMode);
 }
 
 void setDigitalPan(uint16_t pan) {
@@ -295,7 +274,7 @@ void setPanShift(uint16_t value) {
 		panXShift = value;
 	}
 
-	storePanTilt();
+	eeprom_write_word(&panXShiftEE, panXShift);
 }
 
 void setTiltShift(uint16_t value) {
@@ -306,7 +285,7 @@ void setTiltShift(uint16_t value) {
 		tiltXShift = value;
 	}
 
-	storePanTilt();
+	eeprom_write_word(&tiltXShiftEE, tiltXShift);
 }
 
 
@@ -315,7 +294,11 @@ void setPanParams(uint16_t lower, uint16_t upper) {
 	panLLimit = lower;
 	panRange = upper - lower;
 	panSlope = PAN_ANGLE_RANGE / (float) (panRange);
-	storePanTilt();
+	
+	eeprom_write_word(&panXShiftEE, panXShift);
+	eeprom_write_word(&panLLimitEE, panLLimit);
+	eeprom_write_word(&panRangeEE, panRange);
+	eeprom_write_float(&panSlopeEE, panSlope);
 	
 	panTempLower = lower;
 	panTempUpper = upper;
@@ -327,7 +310,11 @@ void setTiltParams(uint16_t lower, uint16_t upper) {
 	tiltLLimit = lower - ((tiltRange - (upper - lower)) / 2);
 	tiltXShift += tiltLLimit;
 	tiltSlope = 244.0 / (float)(upper - lower);
-	storePanTilt();
+	
+	eeprom_write_word(&tiltXShiftEE, tiltXShift);
+	eeprom_write_word(&tiltRangeEE, tiltRange);
+	eeprom_write_word(&tiltLLimitEE, tiltLLimit);
+	eeprom_write_float(&tiltSlopeEE, tiltSlope);
 	
 	tiltTempLower = lower;
 	tiltTempUpper = upper;
