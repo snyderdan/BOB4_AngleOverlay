@@ -25,7 +25,6 @@
 # define F_CPU 16000000UL
 
 #include <avr/interrupt.h>
-#include <util/delay.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -34,6 +33,7 @@
 #include "usart.h"
 #include "pantilt.h"
 #include "analog.h"
+#include "timer.h"
 #include "command_handler.h"
 
 /**********************************************
@@ -66,7 +66,7 @@ int main(void)
 	sprintf(str,"\e[14m\e[66m\e[2J");
 	SendString1(str);
 	
-	_delay_ms(500.00);	// allow time for BOB4 to make adjustments
+	delayms(500);	// allow time for BOB4 to make adjustments
 	
 	while(1)
 	{
@@ -101,6 +101,6 @@ int main(void)
 		
 		commandHandler();
 		
-		_delay_ms(25.0);
+		synchronized(30);
 	}
 }

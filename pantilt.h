@@ -4,7 +4,7 @@
 # define PAN_ANGLE_RANGE 360.0
 
 # define TILT_PORT 3
-# define TILT_ANGLE_RANGE 244.0
+# define TILT_ANGLE_RANGE 270.0
 
 # define MODE_ABSOLUTE 1
 # define MODE_RELATIVE 2
