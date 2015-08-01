@@ -6,11 +6,11 @@
 # define TILT_PORT 3
 # define TILT_ANGLE_RANGE 244.0
 
-# define MODE_ABSOLUTE 0
-# define MODE_RELATIVE 1
+# define MODE_ABSOLUTE 1
+# define MODE_RELATIVE 2
 
-# define MODE_DIGITAL 2
-# define MODE_ANALOG  3
+# define MODE_DIGITAL 3
+# define MODE_ANALOG  4
 
 void initPanTilt();				// initialize pan and tilt - load settings from EEPROM
 
