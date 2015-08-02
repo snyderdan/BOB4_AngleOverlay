@@ -322,7 +322,7 @@ void setTiltParams(uint16_t lower, uint16_t upper) {
 	tiltRange = (int) ((float) (upper - lower) * 360.0 / TILT_ANGLE_RANGE);
 	tiltLLimit = lower - ((tiltRange - (upper - lower)) / 2);
 	tiltXShift += tiltLLimit;
-	tiltSlope = 244.0 / (float)(upper - lower);
+	tiltSlope = TILT_ANGLE_RANGE / (float)(upper - lower);
 	
 	eeprom_write_word(&tiltXShiftEE, tiltXShift);
 	eeprom_write_word(&tiltRangeEE, tiltRange);
