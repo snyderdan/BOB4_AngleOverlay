@@ -27,7 +27,7 @@ uint16_t tiltRaw = 1000;
 uint16_t tiltTempUpper = 1000;
 uint16_t tiltTempLower = 1000;
 
-# define SAMPLE_COUNT 64
+# define SAMPLE_COUNT 32
 # define INDEX_MASK   (SAMPLE_COUNT - 1)
 
 uint16_t pan_readings[SAMPLE_COUNT];
@@ -305,8 +305,8 @@ void setTiltShift(uint16_t value) {
 void setPanParams(uint16_t lower, uint16_t upper) {
 	panXShift = panXShift - panLLimit + lower;
 	panLLimit = lower;
-	panRange = (int) ((float) (upper - lower) * (360.0 / PAN_ANGLE_RANGE));
-	panSlope = PAN_ANGLE_RANGE / (float) (upper - lower);
+	panRange = upper - lower;
+	panSlope = PAN_ANGLE_RANGE / (float) (panRange);
 	
 	eeprom_write_word(&panXShiftEE, panXShift);
 	eeprom_write_word(&panLLimitEE, panLLimit);
@@ -318,10 +318,11 @@ void setPanParams(uint16_t lower, uint16_t upper) {
 }
 
 void setTiltParams(uint16_t lower, uint16_t upper) {
-	tiltXShift = tiltXShift - tiltLLimit + lower;
-	tiltLLimit = lower;
-	tiltRange = (int) ((float) (upper - lower) * (360.0 / TILT_ANGLE_RANGE));
-	tiltSlope = TILT_ANGLE_RANGE / (float)(upper - lower);
+	tiltXShift = tiltXShift - tiltLLimit;
+	tiltRange = (int) ((float) (upper - lower) * 360.0 / TILT_ANGLE_RANGE);
+	tiltLLimit = lower - ((tiltRange - (upper - lower)) / 2);
+	tiltXShift += tiltLLimit;
+	tiltSlope = 244.0 / (float)(upper - lower);
 	
 	eeprom_write_word(&tiltXShiftEE, tiltXShift);
 	eeprom_write_word(&tiltRangeEE, tiltRange);
