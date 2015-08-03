@@ -6,6 +6,8 @@
 #include "array.h"
 
 uint16_t sourceMode;
+uint16_t digitalPanUpdate = 0;
+uint16_t digitalTiltUpdate = 0;
 
 float panSlope;
 uint16_t panRange;
@@ -162,10 +164,12 @@ void setSourceMode(uint16_t mode) {
 
 void setDigitalPan(uint16_t pan) {
 	// Clear the bottom 2 bits because the resolution is too damn high (12-bit ADC on other end)
+	digitalPanUpdate = 1;
 	panRaw = (pan >> 4) & 0x0FFF;
 }
 
 void setDigitalTilt(uint16_t tilt) {
+	digitalTiltUpdate = 1;
 	// Clear the bottom 2 bits because the resolution is too damn high (12-bit ADC on other end)
 	tiltRaw = (tilt >> 4) & 0x0FFF;
 }
@@ -188,7 +192,15 @@ uint16_t getAnalogTilt() {
 
 uint16_t getSampledPan() {
 	
-	uint16_t sampledPan, sorted[SAMPLE_COUNT+1];
+	uint16_t sampledMin, sampledMax, sorted[SAMPLE_COUNT+1];
+	
+	// if pan has not been updated, return the current sample 
+	if (!digitalPanUpdate) {
+		return pan_total / SAMPLE_COUNT;
+	}
+	
+	// if a new pan value is present, add it to the sample and notify for next iteration
+	digitalPanUpdate = 0;
 
 	pan_total -= pan_readings[pan_index];
 	pan_readings[pan_index] = getRawPan();
@@ -197,18 +209,18 @@ uint16_t getSampledPan() {
 	
 	sortArray16(pan_readings, sorted, SAMPLE_COUNT);
 
-	sampledPan = sorted[SAMPLE_COUNT/2];
+	sampledMin = min16(sorted + (SAMPLE_COUNT / 2) - 4, 8);
+	sampledMax = max16(sorted + (SAMPLE_COUNT / 2) - 4, 8);
 	
-	if (sampledPan > panTempUpper) {
+	if (sampledMax > panTempUpper) {
 		// if we have a potentially new high value, set it
-		panTempUpper = sampledPan;
-	} else if (sampledPan < panTempLower) {
+		panTempUpper = sampledMax;
+	} 
+	
+	if (sampledMin < panTempLower) {
 		// if we have a potentially new low value, set it
-		panTempLower = sampledPan;
-	} else {
-		// otherwise just return normally
-		return (pan_total / SAMPLE_COUNT);
-	}
+		panTempLower = sampledMin;
+	} 
 	
 	// potentially new accepted values
 	if ((panTempUpper > (panRange + panLLimit)) || (panTempLower < panLLimit)) {
@@ -221,7 +233,15 @@ uint16_t getSampledPan() {
 
 uint16_t getSampledTilt() {
 	
-	uint16_t sampledTilt, sorted[SAMPLE_COUNT+1];
+	uint16_t sampledMin, sampledMax, sorted[SAMPLE_COUNT+1];
+	
+	// if tilt has not been updated, return the current sample 
+	if (!digitalTiltUpdate) {
+		return tilt_total / SAMPLE_COUNT;
+	}
+	
+	// if a new tilt value is present, add it to the sample and notify for next iteration
+	digitalTiltUpdate = 0;
 
 	tilt_total -= tilt_readings[tilt_index];
 	tilt_readings[tilt_index] = getRawTilt();
@@ -230,17 +250,17 @@ uint16_t getSampledTilt() {
 
 	sortArray16(tilt_readings, sorted, SAMPLE_COUNT);
 
-	sampledTilt = sorted[SAMPLE_COUNT/2];
+	sampledMin = min16(sorted + (SAMPLE_COUNT / 2) - 4, 8);
+	sampledMax = max16(sorted + (SAMPLE_COUNT / 2) - 4, 8);
 	
-	if (sampledTilt > tiltTempUpper) {
+	if (sampledMax > tiltTempUpper) {
 		// if we have a potentially new high value, set it
-		tiltTempUpper = sampledTilt;
-	} else if (sampledTilt < tiltTempLower) {
+		tiltTempUpper = sampledMax;
+	}
+	
+	if (sampledMin < tiltTempLower) {
 		// if we have a potentially new low value, set it
-		tiltTempLower = sampledTilt;
-	} else {
-		// otherwise just return normally
-		return (tilt_total / SAMPLE_COUNT);
+		tiltTempLower = sampledMin;
 	}
 	
 	// potentially new accepted values

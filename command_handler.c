@@ -175,6 +175,6 @@ void commandHandler() {
 			setTiltParams(hex2int16(args[1],args[2],args[3],args[4]), hex2int16(args[5],args[6],args[7],args[8]));
 		}
 	} else if (curChar == CMD_DEBUG) {
-		debugMode = !debugMode;
+		debugMode = (debugMode == 0) ? 1 : 0;
 	}
 }
