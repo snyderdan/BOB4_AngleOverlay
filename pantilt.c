@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <math.h>
 #include <avr/eeprom.h>
 
 #include "analog.h"
@@ -23,6 +24,7 @@ uint16_t panTempLower = 1000;
 float tiltSlope;
 uint16_t tiltRange;
 uint16_t tiltLLimit;
+uint16_t tiltULimit;	// real upper limit, not equal to range
 uint16_t tiltXShift;
 int16_t  tiltYShift;
 uint16_t tiltMode;
@@ -58,6 +60,7 @@ uint16_t EEMEM panModeEE = MODE_RELATIVE;
 float EEMEM tiltSlopeEE = 0.205;
 uint16_t EEMEM tiltRangeEE = 1000;
 uint16_t EEMEM tiltLLimitEE = 500;
+uint16_t EEMEM tiltULimitEE = 1000;
 uint16_t EEMEM tiltXShiftEE = 1000;
 uint16_t EEMEM tiltYShiftEE = 180;
 uint16_t EEMEM tiltModeEE = MODE_RELATIVE;
@@ -87,6 +90,7 @@ void initPanTilt() {
 	panYShift = eeprom_read_word(&panYShiftEE);
 	tiltSlope = eeprom_read_float(&tiltSlopeEE);
 	tiltLLimit = eeprom_read_word(&tiltLLimitEE);
+	tiltULimit = eeprom_read_word(&tiltULimitEE);
 	tiltRange = eeprom_read_word(&tiltRangeEE);
 	tiltMode = eeprom_read_word(&tiltModeEE);
 	tiltXShift = eeprom_read_word(&tiltXShiftEE);
@@ -193,7 +197,7 @@ uint16_t getAnalogTilt() {
 
 uint16_t getSampledPan() {
 	
-	uint16_t sampledMin, sampledMax, updated, sampledValue, sorted[SAMPLE_COUNT];
+	uint16_t sampledMin, sampledMax, sampledValue, sorted[SAMPLE_COUNT];
 	
 	// if pan has not been updated, return the current sample 
 	if (digitalPanUpdate == 0) {
@@ -215,7 +219,19 @@ uint16_t getSampledPan() {
 	sampledMin = min16(sorted + (SAMPLE_COUNT / 2) - 2, 4);
 	sampledMax = max16(sorted + (SAMPLE_COUNT / 2) - 2, 4);
 	
-	updated = 0;
+	if (sampledMax > panTempUpper) {
+		// if we have a potentially new high value, set it
+		panTempUpper = sampledMax;
+	} else if (sampledMin < panTempLower) {
+		// if we have a potentially new low value, set it
+		panTempLower = sampledMin;
+	} 
+	
+	// potentially new accepted values
+	if ((panTempUpper > (panRange + panLLimit)) || (panTempLower < panLLimit)) {
+		// New high or low value!
+		setPanParams(panTempLower, panTempUpper);
+	}
 	
 	// if the difference between the current value and the sampled value is drastic
 	if ((getRawPan() - sampledValue) > (panRange * 0.8)) {
@@ -231,30 +247,12 @@ uint16_t getSampledPan() {
 		return pan_total / SAMPLE_COUNT;
 	}
 	
-	if (sampledMax > panTempUpper) {
-		// if we have a potentially new high value, set it
-		panTempUpper = sampledMax;
-		updated = 1;
-	} else if (sampledMin < panTempLower) {
-		// if we have a potentially new low value, set it
-		panTempLower = sampledMin;
-		updated = 1;
-	} 
-	
-	if (updated == 0) return sampledValue;
-	
-	// potentially new accepted values
-	if ((panTempUpper > (panRange + panLLimit)) || (panTempLower < panLLimit)) {
-		// New high or low value!
-		setPanParams(panTempLower, panTempUpper);
-	}
-	
 	return sampledValue;
 }
 
 uint16_t getSampledTilt() {
 	
-	uint16_t sampledMin, sampledMax, sampledValue, updated, sorted[SAMPLE_COUNT];
+	uint16_t sampledValue, sorted[SAMPLE_COUNT];
 	
 	// if tilt has not been updated, return the current sample 
 	if (digitalTiltUpdate == 0) {
@@ -270,13 +268,20 @@ uint16_t getSampledTilt() {
 	tilt_index = (tilt_index + 1) & INDEX_MASK;
 	
 	sampledValue = tilt_total / SAMPLE_COUNT;
-
-	sortArray16(tilt_readings, sorted, SAMPLE_COUNT);
-
-	sampledMin = min16(sorted + (SAMPLE_COUNT / 2) - 2, 4);
-	sampledMax = max16(sorted + (SAMPLE_COUNT / 2) - 2, 4);
 	
-	updated = 0;
+	if (sampledValue > tiltTempUpper) {
+		// if we have a potentially new high value, set it
+		tiltTempUpper = sampledValue;
+	} else if (sampledValue < tiltTempLower) {
+		// if we have a potentially new low value, set it
+		tiltTempLower = sampledValue;
+	}
+	
+	// potentially new accepted values
+	if ((tiltTempUpper > tiltULimit) || (tiltTempLower < tiltLLimit)) {
+		// New high or low value!
+		setTiltParams(tiltTempLower, tiltTempUpper);
+	}
 	
 	// if the difference between the current value and the sampled value is drastic
 	if ((getRawTilt() - sampledValue) > (tiltRange * 0.8)) {
@@ -290,24 +295,6 @@ uint16_t getSampledTilt() {
 		}
 		
 		return tilt_total / SAMPLE_COUNT;
-	}
-	
-	if (sampledMax > tiltTempUpper) {
-		// if we have a potentially new high value, set it
-		tiltTempUpper = sampledMax;
-		updated = 1;
-	} else if (sampledMin < tiltTempLower) {
-		// if we have a potentially new low value, set it
-		tiltTempLower = sampledMin;
-		updated = 1;
-	}
-	
-	if (updated == 0) return sampledValue;
-	
-	// potentially new accepted values
-	if ((tiltTempUpper > (tiltRange + tiltLLimit)) || (tiltTempLower < tiltLLimit)) {
-		// New high or low value!
-		setTiltParams(tiltTempLower, tiltTempUpper);
 	}
 	
 	return sampledValue;
@@ -332,12 +319,20 @@ uint16_t getSampledTilt() {
  *
  */
 int getPanAngle() {
-	return ((panSlope * modulo(panRange + (signed)(getSampledPan() - panXShift), panRange))) - panYShift;
+	double angle = panSlope * modulo(panRange + (signed)(getSampledPan() - panXShift), panRange);
+	if ((angle - panYShift) > 0)
+		return (int) ceil(angle)  - panYShift;
+	else
+		return (int) floor(angle) - panYShift;
 
 }
 
 int getTiltAngle() {
-	return ((tiltSlope * modulo(tiltRange + (signed)(getSampledTilt() - tiltXShift), tiltRange))) + tiltYShift;
+	double angle = tiltSlope * modulo(tiltRange + (signed)(getSampledTilt() - tiltXShift), tiltRange);
+	if ((angle - tiltYShift) > 0)
+		return (int) ceil(angle) + tiltYShift;
+	else
+		return (int) floor(angle) + tiltYShift;
 }
 
 void setPanShift(uint16_t value) {
@@ -380,16 +375,17 @@ void setPanParams(uint16_t lower, uint16_t upper) {
 
 void setTiltParams(uint16_t lower, uint16_t upper) {
 	
-	tiltXShift = tiltXShift - tiltLLimit;
+	tiltXShift = tiltXShift - tiltLLimit + lower;
 	tiltRange = (int) ((double)(upper - lower) / (TILT_ANGLE_RANGE / 360.0));
 	tiltLLimit = lower;
-	tiltXShift += tiltLLimit;
+	tiltULimit = upper;
 	tiltSlope = - (TILT_ANGLE_RANGE / (double) (upper - lower));
 	
 	eeprom_write_word(&tiltXShiftEE, tiltXShift);
 	eeprom_write_word(&tiltRangeEE, tiltRange);
 	eeprom_write_word(&tiltLLimitEE, tiltLLimit);
 	eeprom_write_float(&tiltSlopeEE, tiltSlope);
+	eeprom_write_word(&tiltULimitEE, tiltULimit);
 	
 	tiltTempLower = lower;
 	tiltTempUpper = upper;
