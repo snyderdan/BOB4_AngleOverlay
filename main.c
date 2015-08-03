@@ -100,5 +100,7 @@ int main(void)
 		}
 		
 		commandHandler();
+		
+		_delay_ms(25.0);
 	}
 }
