@@ -2,10 +2,10 @@
 #include <math.h>
 #include <avr/eeprom.h>
 
-#include "analog.h"
+#include "util/analog.h"
+#include "util/array.h"
+#include "util/modulus.h"
 #include "pantilt.h"
-#include "array.h"
-#include "modulus.h"
 
 uint16_t sourceMode;
 volatile uint16_t digitalPanUpdate = 0;

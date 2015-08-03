@@ -1,9 +1,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "usart.h"
+#include "util/usart.h"
+#include "util/analog.h"
 #include "pantilt.h"
-#include "analog.h"
 
 extern const char VALID_CMD[];
 extern const int VALID_CMD_COUNT;

@@ -31,9 +31,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "usart.h"
+#include "util/usart.h"
+#include "util/analog.h"
 #include "pantilt.h"
-#include "analog.h"
 #include "command_handler.h"
 
 /**********************************************
