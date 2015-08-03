@@ -77,7 +77,7 @@ int main(void)
 		sprintf(str,"\e[0;0H");
 		SendString1(str);
 		
-		if (debugMode) {
+		if (debugMode == 1) {
 			sprintf(str, " PAN:%4d RAW:%5d SAMP:%5d ", getPanAngle(), getRawPan(), getSampledPan());
 			SendString1(str);
 			

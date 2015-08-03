@@ -7,7 +7,7 @@
 
 extern const char VALID_CMD[];
 extern const int VALID_CMD_COUNT;
-extern int debugMode;
+extern volatile int debugMode;
 
 # define CSI_SEQ  '\xC3'
 # define CST_SEQ  '\x5D'

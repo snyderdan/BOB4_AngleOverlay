@@ -6,8 +6,8 @@
 #include "array.h"
 
 uint16_t sourceMode;
-uint16_t digitalPanUpdate = 0;
-uint16_t digitalTiltUpdate = 0;
+volatile uint16_t digitalPanUpdate = 0;
+volatile uint16_t digitalTiltUpdate = 0;
 
 float panSlope;
 uint16_t panRange;
@@ -29,7 +29,7 @@ uint16_t tiltRaw = 1000;
 uint16_t tiltTempUpper = 1000;
 uint16_t tiltTempLower = 1000;
 
-# define SAMPLE_COUNT 32
+# define SAMPLE_COUNT 16
 # define INDEX_MASK   (SAMPLE_COUNT - 1)
 
 uint16_t pan_readings[SAMPLE_COUNT];
@@ -132,7 +132,7 @@ void setTiltMode(uint16_t mode) {
 		tiltMode = MODE_RELATIVE;
 	} else if (mode == MODE_ABSOLUTE) {
 		tiltXShift += (tiltRange / 2);
-		tiltYShift = 0;
+		tiltYShift = 360;
 		tiltMode = MODE_ABSOLUTE;
 	} else {
 		return;
@@ -192,10 +192,10 @@ uint16_t getAnalogTilt() {
 
 uint16_t getSampledPan() {
 	
-	uint16_t sampledMin, sampledMax, sorted[SAMPLE_COUNT+1];
+	uint16_t sampledMin, sampledMax, updated, sampledValue, sorted[SAMPLE_COUNT];
 	
 	// if pan has not been updated, return the current sample 
-	if (!digitalPanUpdate) {
+	if (digitalPanUpdate == 0) {
 		return pan_total / SAMPLE_COUNT;
 	}
 	
@@ -207,20 +207,40 @@ uint16_t getSampledPan() {
 	pan_total += pan_readings[pan_index];
 	pan_index = (pan_index + 1) & INDEX_MASK;
 	
+	sampledValue = pan_total / SAMPLE_COUNT;
+	
 	sortArray16(pan_readings, sorted, SAMPLE_COUNT);
 
-	sampledMin = min16(sorted + (SAMPLE_COUNT / 2) - 4, 8);
-	sampledMax = max16(sorted + (SAMPLE_COUNT / 2) - 4, 8);
+	sampledMin = min16(sorted + (SAMPLE_COUNT / 2) - 2, 4);
+	sampledMax = max16(sorted + (SAMPLE_COUNT / 2) - 2, 4);
+	
+	updated = 0;
+	
+	// if the difference between the current value and the sampled value is drastic
+	if ((getRawPan() - sampledValue) > (panRange * 0.8)) {
+		// we know we rolled over the zero point, so to avoid having the angle go wacky
+		// we fill the sampling with the current value
+		int i, current = getRawPan();
+		pan_total = 0;
+		for (i=0; i<SAMPLE_COUNT; i++) {
+			pan_readings[i] = current;
+			pan_total += current;
+		}
+		
+		return pan_total / SAMPLE_COUNT;
+	}
 	
 	if (sampledMax > panTempUpper) {
 		// if we have a potentially new high value, set it
 		panTempUpper = sampledMax;
-	} 
-	
-	if (sampledMin < panTempLower) {
+		updated = 1;
+	} else if (sampledMin < panTempLower) {
 		// if we have a potentially new low value, set it
 		panTempLower = sampledMin;
+		updated = 1;
 	} 
+	
+	if (updated == 0) return sampledValue;
 	
 	// potentially new accepted values
 	if ((panTempUpper > (panRange + panLLimit)) || (panTempLower < panLLimit)) {
@@ -228,15 +248,15 @@ uint16_t getSampledPan() {
 		setPanParams(panTempLower, panTempUpper);
 	}
 	
-	return (pan_total / SAMPLE_COUNT);
+	return sampledValue;
 }
 
 uint16_t getSampledTilt() {
 	
-	uint16_t sampledMin, sampledMax, sorted[SAMPLE_COUNT+1];
+	uint16_t sampledMin, sampledMax, sampledValue, updated, sorted[SAMPLE_COUNT];
 	
 	// if tilt has not been updated, return the current sample 
-	if (!digitalTiltUpdate) {
+	if (digitalTiltUpdate == 0) {
 		return tilt_total / SAMPLE_COUNT;
 	}
 	
@@ -247,21 +267,41 @@ uint16_t getSampledTilt() {
 	tilt_readings[tilt_index] = getRawTilt();
 	tilt_total += tilt_readings[tilt_index];
 	tilt_index = (tilt_index + 1) & INDEX_MASK;
+	
+	sampledValue = tilt_total / SAMPLE_COUNT;
 
 	sortArray16(tilt_readings, sorted, SAMPLE_COUNT);
 
-	sampledMin = min16(sorted + (SAMPLE_COUNT / 2) - 4, 8);
-	sampledMax = max16(sorted + (SAMPLE_COUNT / 2) - 4, 8);
+	sampledMin = min16(sorted + (SAMPLE_COUNT / 2) - 2, 4);
+	sampledMax = max16(sorted + (SAMPLE_COUNT / 2) - 2, 4);
+	
+	updated = 0;
+	
+	// if the difference between the current value and the sampled value is drastic
+	if ((getRawTilt() - sampledValue) > (tiltRange * 0.8)) {
+		// we know we rolled over the zero point, so to avoid having the angle go wacky
+		// we fill the sampling with the current value
+		int i, current = getRawTilt();
+		tilt_total = 0;
+		for (i=0; i<SAMPLE_COUNT; i++) {
+			tilt_readings[i] = current;
+			tilt_total += current;
+		}
+		
+		return tilt_total / SAMPLE_COUNT;
+	}
 	
 	if (sampledMax > tiltTempUpper) {
 		// if we have a potentially new high value, set it
 		tiltTempUpper = sampledMax;
-	}
-	
-	if (sampledMin < tiltTempLower) {
+		updated = 1;
+	} else if (sampledMin < tiltTempLower) {
 		// if we have a potentially new low value, set it
 		tiltTempLower = sampledMin;
+		updated = 1;
 	}
+	
+	if (updated == 0) return sampledValue;
 	
 	// potentially new accepted values
 	if ((tiltTempUpper > (tiltRange + tiltLLimit)) || (tiltTempLower < tiltLLimit)) {
@@ -269,7 +309,7 @@ uint16_t getSampledTilt() {
 		setTiltParams(tiltTempLower, tiltTempUpper);
 	}
 	
-	return (tilt_total / SAMPLE_COUNT);
+	return sampledValue;
 }
 
 /**
@@ -291,12 +331,12 @@ uint16_t getSampledTilt() {
  *
  */
 int getPanAngle() {
-	return ((signed) (panSlope * ((panRange + (uint16_t)(getSampledPan() - panXShift)) % panRange))) - panYShift;
+	return ((panSlope * ((signed)(panRange + (signed)(getSampledPan() - panXShift)) % (signed) panRange))) - panYShift;
 
 }
 
 int getTiltAngle() {
-	return ((signed) (tiltSlope * ((tiltRange + (uint16_t)(getSampledTilt() - tiltXShift)) % tiltRange))) - tiltYShift;
+	return ((tiltSlope * ((signed)(tiltRange + (signed)(getSampledTilt() - tiltXShift)) % (signed)tiltRange))) + tiltYShift;
 }
 
 void setPanShift(uint16_t value) {
@@ -338,11 +378,12 @@ void setPanParams(uint16_t lower, uint16_t upper) {
 }
 
 void setTiltParams(uint16_t lower, uint16_t upper) {
+	
 	tiltXShift = tiltXShift - tiltLLimit;
 	tiltRange = (int) ((float) (upper - lower) * 360.0 / TILT_ANGLE_RANGE);
-	tiltLLimit = lower - ((tiltRange - (upper - lower)) / 2);
+	tiltLLimit = lower;
 	tiltXShift += tiltLLimit;
-	tiltSlope = TILT_ANGLE_RANGE / (float)(upper - lower);
+	tiltSlope = - TILT_ANGLE_RANGE / (float)(upper - lower);
 	
 	eeprom_write_word(&tiltXShiftEE, tiltXShift);
 	eeprom_write_word(&tiltRangeEE, tiltRange);
