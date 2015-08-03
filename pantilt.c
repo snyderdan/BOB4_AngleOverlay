@@ -4,6 +4,7 @@
 #include "analog.h"
 #include "pantilt.h"
 #include "array.h"
+#include "modulus.h"
 
 uint16_t sourceMode;
 volatile uint16_t digitalPanUpdate = 0;
@@ -331,12 +332,12 @@ uint16_t getSampledTilt() {
  *
  */
 int getPanAngle() {
-	return ((panSlope * ((signed)(panRange + (signed)(getSampledPan() - panXShift)) % (signed) panRange))) - panYShift;
+	return ((panSlope * modulo(panRange + (signed)(getSampledPan() - panXShift), panRange))) - panYShift;
 
 }
 
 int getTiltAngle() {
-	return ((tiltSlope * ((signed)(tiltRange + (signed)(getSampledTilt() - tiltXShift)) % (signed)tiltRange))) + tiltYShift;
+	return ((tiltSlope * modulo(tiltRange + (signed)(getSampledTilt() - tiltXShift), tiltRange))) + tiltYShift;
 }
 
 void setPanShift(uint16_t value) {
@@ -380,10 +381,10 @@ void setPanParams(uint16_t lower, uint16_t upper) {
 void setTiltParams(uint16_t lower, uint16_t upper) {
 	
 	tiltXShift = tiltXShift - tiltLLimit;
-	tiltRange = (int) ((float) (upper - lower) * 360.0 / TILT_ANGLE_RANGE);
+	tiltRange = (int) ((double)(upper - lower) / (TILT_ANGLE_RANGE / 360.0));
 	tiltLLimit = lower;
 	tiltXShift += tiltLLimit;
-	tiltSlope = - TILT_ANGLE_RANGE / (float)(upper - lower);
+	tiltSlope = - (TILT_ANGLE_RANGE / (double) (upper - lower));
 	
 	eeprom_write_word(&tiltXShiftEE, tiltXShift);
 	eeprom_write_word(&tiltRangeEE, tiltRange);
