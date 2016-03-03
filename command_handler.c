@@ -12,7 +12,7 @@ const uint8_t VALID_CMD_ARGC[] = {2,2,2,2,0,0,0,8,0,0,9,0};
 	
 const int VALID_CMD_COUNT = 12;
 
-int debugMode = 0;
+volatile int debugMode = 0;
 
 char CMDIN[256];
 
@@ -175,6 +175,8 @@ void commandHandler() {
 			setTiltParams(hex2int16(args[1],args[2],args[3],args[4]), hex2int16(args[5],args[6],args[7],args[8]));
 		}
 	} else if (curChar == CMD_DEBUG) {
-		debugMode = !debugMode;
+		debugMode = (debugMode == 0) ? 1 : 0;
+		sprintf(string,"\e[2J");
+		SendString1(string);
 	}
 }

@@ -31,9 +31,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "usart.h"
+#include "util/usart.h"
+#include "util/analog.h"
 #include "pantilt.h"
-#include "analog.h"
 #include "command_handler.h"
 
 /**********************************************
@@ -73,26 +73,29 @@ int main(void)
 			// set font to smallest english ASCII
 		sprintf(str,"\e[14m\e[66m");
 		SendString1(str);
-		// go to PAN field and clear last number
-		sprintf(str,"\e[0;0H");
-		SendString1(str);
 		
-		if (debugMode) {
+		if (debugMode == 1) {
+			// go to PAN field and clear last number
+			sprintf(str,"\e[18;37H");
+			SendString1(str);
 			sprintf(str, " PAN:%4d RAW:%5d SAMP:%5d ", getPanAngle(), getRawPan(), getSampledPan());
 			SendString1(str);
 			
 			// go to TILT field and clear last number
-			sprintf(str, "\e[1;0H");
+			sprintf(str, "\e[19;37H");
 			SendString1(str);
 			
 			sprintf(str, " TLT:%4d RAW:%5d SAMP:%5d ", getTiltAngle(), getRawTilt(), getSampledTilt());
 			SendString1(str);
 		} else {
+			// go to PAN field and clear last number
+			sprintf(str,"\e[18;58H");
+			SendString1(str);
 			sprintf(str, " PAN:%4d ", getPanAngle());
 			SendString1(str);
 			
 			// go to TILT field and clear last number
-			sprintf(str, "\e[1;0H");
+			sprintf(str, "\e[19;58H");
 			SendString1(str);
 			
 			sprintf(str, " TLT:%4d ", getTiltAngle());
